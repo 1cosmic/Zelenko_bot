@@ -4,150 +4,13 @@ from project.users import User
 from project.utils import States
 from project.buttons import Buttons
 from project.messages import Messages
+from project.skeleton_quest import create_quests, free_quests
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from asyncio import sleep
-
-
-
-async def q_Animals(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_China(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_Wing(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_Light(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_Shell(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-async def q_Case(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-async def q_Iron(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-async def q_Planet(self, user, dp):
-    """
-    тип квеста: 1 (загадка и ответ)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_Morze(self, quest, user, dp):
-    """
-    тип квеста: 2 (азбука морзе, шифрование имени пользователя и его последующее сравнение с ответом)
-
-    :param user: объект типа user
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
-
-
-async def q_Draw(self, quest, user, dp):
-    """
-    Тип квеста: 3 (анализ типа сообщения пользователя, проверка на Image)
-
-    :param user: объект типа User
-    :param: dp: диспетчер бота, к нему обращаемся в хендлере:
-    @dp.message_handler()
-    """
-
-    pass
-
-    return True
 
 
 # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
@@ -177,8 +40,11 @@ if __name__ == "__main__":
     # Список пользователей, проходящих регистрацию.
     pre_register_user = []
 
-    # Заводим список пользователей, проходящих сейчас квесты параллельно.
+    # Заводим список пользователей, зарегистрированных на прохождение.
     list_user = {}
+
+    # Список пользователей, находящихся в очереди на прохождение (в случае пробок).
+    await_user = []
 
     async def register(id, username):
 
@@ -191,8 +57,41 @@ if __name__ == "__main__":
         await tg_bot.send_message(id, Messages['reg_name'], reply_markup=types.ReplyKeyboardRemove())
 
 
-    # Заводим список квестов, свободных для прохождения.
-    free_quests = []
+    # Создаём список квестов для прохождения.
+    list_quest = create_quests()
+
+
+    async def go_to_next_quest(user = None, quest = None):
+
+        if user == None:
+            for u in await_user:
+                if quest in u.required_quest:
+
+                    index_q = list_quest.index(quest)
+                    list_quest[index_q].occupy(u)
+
+                    # ДОПИСАТЬ правильную установку состояний в зависимости от квеста.
+
+                    await dispatcher.current_state(user=u).set_state(States.QUEST_MORZE[0])
+                    await tg_bot.send_message(u, "Перенаправляю на следующий квест...")
+
+        if quest == None:
+
+            print("Пытаюсь обработать пользователя.")
+
+            for q in free_quests(list_quest):
+                print(q)
+                if q in user.required_quests():
+
+                    print("Прохожу основную логику работы.")
+
+                    index_q = list_quest.index(q)
+                    list_quest[index_q].occupy(user)
+
+                    # ДОПИСАТЬ правильную установку состояний в зависимости от квеста.
+
+                    await dispatcher.current_state(user=user.chatId).set_state(States.QUEST_MORZE[0])
+                    await tg_bot.send_message(user, "Перенаправляю на следующий квест...")
 
 
     # TODO: Написать функцию распрделения пользователей по комнатам.
@@ -225,11 +124,85 @@ if __name__ == "__main__":
         :param message:
         :return:
         """
-        await msg.reply("По идее, сейчас я тебя перенаправлю в другую комнату. Ожидай.",
+        id = msg.from_user.id
+        state = dispatcher.current_state(user=id)
+
+        # Debug информация.
+        await msg.answer(f"Квесты на прохождение:\n{list_user[id].required_quests()}")
+
+        if list_user[id].is_free:
+            if id not in await_user:
+
+                await msg.answer("Сейчас проверим, свободны ли квесты?")
+
+                if len(free_quests(list_quest)) > 0:
+                    print("Пытаюсь перевести человека на квест...")
+                    await go_to_next_quest(list_user[id])
+
+                else:
+                    await_user.append(id)
+                    print("Погоди немного, сейчас освободится локация и я тебя проведук ней.")
+
+
+
+            # await tg_bot.send_message(id, "Сейчас я тебя отправлю на следующий квест. Приготовься!")
+            # await_user.remove(id)
+            #
+            # await msg.answer("Пока все квесты заняты, подожди немного.")
+            #
+            # else:
+
+
+        else:
+            msg.reply("Ты успешно прошёл все комнаты! Красавчик, брат.")
+
+        await msg.reply("По идее, сейчас я тебя перенаправлю на другой квест. Ожидай.",
                   reply_markup=types.ReplyKeyboardRemove())
 
         # TODO: Написать алгоритм выборки свободного квеста по приоритету.
         pass
+
+
+    @dispatcher.message_handler(state="*", commands=["morze", "quiz"])
+    async def start_quests(msg: types.Message):
+
+        id = msg.from_user.id
+        state = dispatcher.current_state(user=id)
+
+        if msg.text == "/morze":
+            await state.set_state(States.QUEST_MORZE[0])
+
+        elif msg.text == "/quiz":
+            await state.set_state(States.QUEST_QUIZ[0])
+
+
+
+    @dispatcher.message_handler(state=States.QUEST_MORZE[0])
+    async def q_Morze(msg: types.Message):
+
+        id = msg.from_user.id
+
+        if msg.text == "Пройти квест":
+            state = dispatcher.current_state(user=msg.from_user.id)
+            await msg.reply("Поздравляю! Ты прошёл квест Морзе!")
+
+        else:
+            await msg.reply("Тут сейчас должен быть лор квеста.")
+
+
+
+    @dispatcher.message_handler(state=States.QUEST_QUIZ[0])
+    async def q_Morze(msg: types.Message):
+
+        id = msg.from_user.id
+
+        if msg.text == "Пройти квест":
+            state = dispatcher.current_state(user=msg.from_user.id)
+            await msg.reply("Поздравляю! Ты прошёл квест вопросник!")
+
+        else:
+            await msg.reply("Тут сейчас должен быть лор квеста.")
+
 
 
     @dispatcher.message_handler(commands=['quit'])
@@ -257,7 +230,10 @@ if __name__ == "__main__":
 
         if msg.text == "Да" and list_user[id].name != None:
             await msg.reply("Отлично! Мы готовы начинать.")
-            await state.set_state(States.GO_TO_NEXT[0])
+            await state.reset_state()
+
+            # Включить после написания готовой логики распределения по квестам.
+            # await state.set_state(States.GO_TO_NEXT[0])
 
         elif msg.text == "Нет":
             await msg.answer(Messages['reg_name'])

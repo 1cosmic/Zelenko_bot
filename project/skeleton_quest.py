@@ -62,7 +62,12 @@ def create_quests():
     res = list()
 
     # Заполняем список.
-    res.append(Quest(1, "Азбука Морзе", 1, 1))  # Азбука Морзе
+    res.append(Quest(1, "Азбука Морзе", "morze", 1))  # Азбука Морзе
+    res.append(Quest(2, "Как называется животное на плёнке?", "quest", 3))
     #...
 
     return res
+
+
+def free_quests(quests_list):
+    return list(filter(lambda x: x.is_free(), quests_list))

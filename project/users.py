@@ -1,10 +1,14 @@
+
+count_quest = 2
+
+
 class User:
     def __init__(self, chatId, username, name):
         self.chatId = chatId  # id-чата
         self.username = username  # никнейм в телеграме
         self.name = name  # имя человека при регистрации
 
-        self.__required_quests = list(range(1, 13))  # список квестов для прохождения
+        self.__required_quests = list(range(1, count_quest))  # список квестов для прохождения
 
     def is_free(self):
         """
@@ -30,6 +34,9 @@ class User:
 
         return True
 
+
+    def required_quests(self):
+        return self.__required_quests
 
 
 
