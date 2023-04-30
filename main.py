@@ -1,5 +1,14 @@
-from aiogram import Bot, Dispatcher
 import config
+
+from project.users import User
+from project.utils import States
+from project.buttons import Buttons
+from project.messages import Messages
+
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
 
 
 async def q_Animals(self, user, dp):
@@ -139,15 +148,12 @@ async def q_Draw(self, quest, user, dp):
     return True
 
 
+# =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+# =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+# Функции для внутренней работы программы (автоматизаторы).
 
-
-
-
-
-
-
-
-
+# =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+# =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
 
 if __name__ == "__main__":
 
@@ -161,13 +167,14 @@ if __name__ == "__main__":
     ### ==========
 
 
-
-
-
-
     # Создаём асинхронного бота.
     tg_bot = Bot(token)
-    dispatcher = Dispatcher(tg_bot)
+    dispatcher = Dispatcher(tg_bot, storage=MemoryStorage())
+    dispatcher.middleware.setup(LoggingMiddleware())
+
+
+    # Список пользователей, проходящих регистрацию.
+    pre_register_user = []
 
     # Заводим список пользователей, проходящих сейчас квесты параллельно.
     list_user = []
@@ -175,16 +182,39 @@ if __name__ == "__main__":
     # Заводим список квестов, свободных для прохождения.
     free_quests = []
 
+
+
     # TODO: Написать функцию распрделения пользователей по комнатам.
+
+    # @dp.message_handler(state='*', commands=[''])
+    # async def process_setstate_command(message: types.Message):
+    #
+    #     argument = message.get_args()
+    #     state = dispatcher(user=message.from_user.id)
+    #
+    #     if not argument:
+    #         await state.reset_state()
+    #         return await message.reply(MESSAGES['state_reset'])
+    #
+    #     if (not argument.isdigit()) or (not int(argument) < len(TestStates.all())):
+    #         return await message.reply(MESSAGES['invalid_key'].format(key=argument))
+    #
+    #     await state.set_state(TestStates.all()[int(argument)])
+    #     await message.reply(MESSAGES['state_change'], reply=False)
+
 
 
     @dispatcher.message_handler(commands=['start'])
-    async def start(message):
+    async def start(message: types.Message):
 
         # TODO: Изменить приветствие, добавить медиа и т.п.
 
-        hello_text = "Привет! Добро пожаловать в квест-комнату музея А. Зеленко! Как тебя зовут?"
-        await message.reply(message.from_user.id, hello_text)
+        # Добавляем пользователя в очередь на регистрацию.
+        if message.from_user.id not in pre_register_user:
+            pre_register_user.append(message.from_user.id)
+
+        # Приветствие.
+        await message.reply(Messages['start'], reply_markup=Buttons['start'])
 
 
     @dispatcher.message_handler(commands=['next_quest'])
@@ -198,7 +228,23 @@ if __name__ == "__main__":
     async def quit_from_game(message):
         pass
 
+
+    @dispatcher.message_handler(state=States.REGISTER)
+    async def register_user(msg: types.Message):
+        await msg.reply("Continue of register user.")
+
     @dispatcher.message_handler()
-    def process_user_answer(message):
-        # TODO: продумать, как нам сохранять имя пользователя.
-        pass
+    async def process_user_answer(msg: types.Message):
+
+        state = dispatcher.current_state(user=msg.from_user.id)
+
+        if msg.from_user.id in pre_register_user:
+            await state.set_state(States.REGISTER)
+            return await msg.reply("Приступаю к регистрации.")
+
+        await msg.reply("В данный момент я не умею обрабатывать такое сообщение.")
+
+
+
+
+    executor.start_polling(dispatcher)

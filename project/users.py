@@ -29,3 +29,39 @@ class User:
         self.__required_quests.remove(id)
 
         return True
+
+
+
+
+class Users_List():
+
+    def __init__(self):
+        self.__list_user = []
+        self.__max_in_game = 8
+
+    def addUser(self, user):
+        if self.__max_in_game <= 8:
+            self.__list_user.append(user)
+            return True
+
+        else:
+            print("WARNING! \nMax user in game!")
+            return False
+
+    def removeUser(self, user):
+        self.__list_user.remove(user)
+
+
+    def getCountUsers(self):
+        return len(self.__list_user)
+
+
+    def getUsers(self):
+        return self.__list_user
+
+
+class Users_In_Game(Users_List):
+    pass
+
+class Users_Wait_Game(Users_List):
+    pass
