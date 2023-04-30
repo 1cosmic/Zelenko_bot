@@ -8,4 +8,5 @@ class States(Helper):
 
     REGISTER = ListItem()
     QUEST_MORZE = ListItem()
-    Q_OUIZ_1 = ListItem()
+    Q_QUIZ_1 = ListItem()
+    GO_TO_NEXT = ListItem()

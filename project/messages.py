@@ -6,10 +6,12 @@ hello_text = """Привет! Добро пожаловать в квест-ко
 
 register_text = """Давай знакомиться! Как тебя зовут? Укажи только имя."""
 
+register_name_text = "Как тебя зовут?\nНапиши только лишь своё имя, без цифр и прочих символов."
 
 
 # Словарь всех сообщений.
 Messages = {
     "start": hello_text,
-    "reg": register_text
+    "reg": register_text,
+    "reg_name": register_name_text,
 }
