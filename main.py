@@ -158,7 +158,7 @@ if __name__ == "__main__":
         pass
 
 
-    @dispatcher.message_handler(state="*", commands=["morze", "quiz_1", ])
+    @dispatcher.message_handler(state="*", commands=["morze", "quiz_1", "quiz_2", "quiz_3"])
     async def start_quests(msg: types.Message):
 
         id = msg.from_user.id
@@ -167,8 +167,8 @@ if __name__ == "__main__":
         if msg.text == "/morze":
             await state.set_state(States.QUEST_MORZE[0])
 
-        elif msg.text == "/quiz_1":
-            await state.set_state(States.QUEST_QUIZ[0])
+        if msg.text == "/quiz_1":
+            await state.set_state(States.QUEST_QUIZ_1[0])
             await tg_bot.send_message(id,
                                       "Я очень люблю проводить эксперименты! Мир вокруг такой удивительный, "
                                       "что открытия могут ждать в "
@@ -177,6 +177,24 @@ if __name__ == "__main__":
                                       "ты! Найди мою лабораторию для исследования света и узнай: Сколько лампочек "
                                       "нужно включить, "
                                       "чтобы получился белый цвет?")
+
+        if msg.text == "/quiz_2":
+            await state.set_state(States.QUEST_QUIZ_2[0])
+            await tg_bot.send_message(id,
+                                      "У меня есть пара домашних животных: это 2 улитки – Саша и Саша. Мне нравится "
+                                      "за ними наблюдать и есть, чему у них поучиться – они никогда не торопятся! "
+                                      "Например, за час они проползут совсем небольшое расстояние. Особенно, "
+                                      "если сравнивать с другими животными. А знаешь, на какое расстояние за один час "
+                                      "прокрутится наша планета? Где-то в доме у меня хранится правильный ответ!")
+
+        if msg.text == "/quiz_3":
+            await state.set_state(States.QUEST_QUIZ_3[0])
+            await tg_bot.send_message(id,
+                                      "Каждый день я придумываю разные изобретения. То создам вертолет для улиток, "
+                                      "то трамплин для пирожков. А когда я устаю от работы - я смотрю слайды и "
+                                      "фотографии на своем диапроекторе.Особенно мне нравятся истории про зверей, "
+                                      "а моя самая любимая пленка - про одного представителя семейства кошачьих. "
+                                      "Попробуй найти эту пленку! Как называется это животное?")
 
 
     @dispatcher.message_handler(state=States.QUEST_MORZE[0])
@@ -192,7 +210,7 @@ if __name__ == "__main__":
             await msg.reply("Тут сейчас должен быть лор квеста.")
 
 
-    @dispatcher.message_handler(state=States.QUEST_QUIZ[0])
+    @dispatcher.message_handler(state=States.QUEST_QUIZ_1[0])
     async def q_Quiz(msg: types.Message):
         id = msg.from_user.id
         flag_for_hints = 0
@@ -210,12 +228,35 @@ if __name__ == "__main__":
                                 "которая спряталась в углу шкафа")
             flag_for_hints = 1
 
-        # if msg.text == "Пройти квест":
-        #     state = dispatcher.current_state(user=msg.from_user.id)
-        #     await msg.reply("Поздравляю! Ты прошёл квест вопросник!")
-        #
-        # else:
-        #     await msg.reply("Тут сейчас должен быть лор квеста.")
+
+    @dispatcher.message_handler(state=States.QUEST_QUIZ_2[0])
+    async def q_Quiz(msg: types.Message):
+        id = msg.from_user.id
+        if msg.text == "1675":
+            state = dispatcher.current_state(user=msg.from_user.id)
+            await msg.reply("Молодец! Все верно!")
+            await msg.reply("Квест пройден!")
+        else:
+            if flag_for_hints == 0:
+                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чтобы узнать,"
+                                "кто и сколько проходит за час, необходимо подняться на чердак.")
+
+
+    @dispatcher.message_handler(state=States.QUEST_QUIZ_3[0])
+    async def q_Quiz(msg: types.Message):
+        id = msg.from_user.id
+        if msg.text == "тигр":
+            state = dispatcher.current_state(user=msg.from_user.id)
+            await msg.reply("Молодец! Все верно!")
+            await msg.reply("Квест пройден!")
+        else:
+            if flag_for_hints == 0:
+                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Обратите внимание на "
+                                "небольшие полки в углу стола.")
+                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Обратите внимание на "
+                                "небольшие полки в углу стола.")
+
+
 
 
     @dispatcher.message_handler(commands=['quit'])
