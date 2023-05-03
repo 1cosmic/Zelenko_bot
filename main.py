@@ -299,7 +299,7 @@ if __name__ == "__main__":
         id = msg.from_user.id
         if msg.text == "лестница":
             state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
+            await msg.reply("Это правильный ответ!")
             await msg.reply("Квест пройден!")
         else:
             await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чтобы отыскать нужную "
@@ -331,7 +331,7 @@ if __name__ == "__main__":
         id = msg.from_user.id
         if msg.text == "2":
             state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
+            await msg.reply("Это правильный ответ!")
             await msg.reply("Квест пройден!")
         else:
             await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чемоданы, с которыми "
