@@ -12,6 +12,7 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from asyncio import sleep
 
+flag_for_hints = 0
 
 # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
 # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
@@ -35,7 +36,6 @@ if __name__ == "__main__":
     tg_bot = Bot(token)
     dispatcher = Dispatcher(tg_bot, storage=MemoryStorage())
     dispatcher.middleware.setup(LoggingMiddleware())
-
 
     # Список пользователей, проходящих регистрацию.
     pre_register_user = []
@@ -61,12 +61,11 @@ if __name__ == "__main__":
     list_quest = create_quests()
 
 
-    async def go_to_next_quest(user = None, quest = None):
+    async def go_to_next_quest(user=None, quest=None):
 
         if user == None:
             for u in await_user:
                 if quest in u.required_quest:
-
                     index_q = list_quest.index(quest)
                     list_quest[index_q].occupy(u)
 
@@ -82,7 +81,6 @@ if __name__ == "__main__":
             for q in free_quests(list_quest):
                 print(q)
                 if q in user.required_quests():
-
                     print("Прохожу основную логику работы.")
 
                     index_q = list_quest.index(q)
@@ -95,7 +93,6 @@ if __name__ == "__main__":
 
 
     # TODO: Написать функцию распрделения пользователей по комнатам.
-
 
     @dispatcher.message_handler(state='*', commands=['start'])
     async def start(message: types.Message):
@@ -143,8 +140,6 @@ if __name__ == "__main__":
                     await_user.append(id)
                     print("Погоди немного, сейчас освободится локация и я тебя проведук ней.")
 
-
-
             # await tg_bot.send_message(id, "Сейчас я тебя отправлю на следующий квест. Приготовься!")
             # await_user.remove(id)
             #
@@ -157,13 +152,13 @@ if __name__ == "__main__":
             msg.reply("Ты успешно прошёл все комнаты! Красавчик, брат.")
 
         await msg.reply("По идее, сейчас я тебя перенаправлю на другой квест. Ожидай.",
-                  reply_markup=types.ReplyKeyboardRemove())
+                        reply_markup=types.ReplyKeyboardRemove())
 
         # TODO: Написать алгоритм выборки свободного квеста по приоритету.
         pass
 
 
-    @dispatcher.message_handler(state="*", commands=["morze", "quiz"])
+    @dispatcher.message_handler(state="*", commands=["morze", "quiz_1", ])
     async def start_quests(msg: types.Message):
 
         id = msg.from_user.id
@@ -172,9 +167,16 @@ if __name__ == "__main__":
         if msg.text == "/morze":
             await state.set_state(States.QUEST_MORZE[0])
 
-        elif msg.text == "/quiz":
+        elif msg.text == "/quiz_1":
             await state.set_state(States.QUEST_QUIZ[0])
-
+            await tg_bot.send_message(id,
+                                      "Я очень люблю проводить эксперименты! Мир вокруг такой удивительный, "
+                                      "что открытия могут ждать в "
+                                      "самых неожиданных местах. В своем доме я могу проводить эксперименты на каждом "
+                                      "шагу. Попробуй и "
+                                      "ты! Найди мою лабораторию для исследования света и узнай: Сколько лампочек "
+                                      "нужно включить, "
+                                      "чтобы получился белый цвет?")
 
 
     @dispatcher.message_handler(state=States.QUEST_MORZE[0])
@@ -190,19 +192,30 @@ if __name__ == "__main__":
             await msg.reply("Тут сейчас должен быть лор квеста.")
 
 
-
     @dispatcher.message_handler(state=States.QUEST_QUIZ[0])
-    async def q_Morze(msg: types.Message):
-
+    async def q_Quiz(msg: types.Message):
         id = msg.from_user.id
-
-        if msg.text == "Пройти квест":
+        flag_for_hints = 0
+        if msg.text == "3":
             state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Поздравляю! Ты прошёл квест вопросник!")
-
+            await msg.reply("Молодец! Все верно!")
+            await msg.reply("Квест пройден!")
+            flag_for_hints = 0
         else:
-            await msg.reply("Тут сейчас должен быть лор квеста.")
+            if flag_for_hints == 0:
+                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: провести эксперемент можно в "
+                                "шкафу.")
+            else:
+                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 2: братите внимение на Музу, "
+                                "которая спряталась в углу шкафа")
+            flag_for_hints = 1
 
+        # if msg.text == "Пройти квест":
+        #     state = dispatcher.current_state(user=msg.from_user.id)
+        #     await msg.reply("Поздравляю! Ты прошёл квест вопросник!")
+        #
+        # else:
+        #     await msg.reply("Тут сейчас должен быть лор квеста.")
 
 
     @dispatcher.message_handler(commands=['quit'])
@@ -248,7 +261,6 @@ if __name__ == "__main__":
             await msg.reply(f"Тебя зовут {list_user[id].name}, верно?", reply_markup=Buttons['regs'])
 
 
-
     @dispatcher.callback_query_handler(lambda c: c.data == "!reg")
     async def register_user_by_button(callback_query: types.CallbackQuery):
         """
@@ -263,8 +275,6 @@ if __name__ == "__main__":
 
         if id in pre_register_user:
             await register(id, username)
-
-
 
 
     @dispatcher.message_handler()
