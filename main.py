@@ -158,7 +158,8 @@ if __name__ == "__main__":
         pass
 
 
-    @dispatcher.message_handler(state="*", commands=["morze", "quiz_1", "quiz_2", "quiz_3", "quiz_4", "quiz_5"])
+    @dispatcher.message_handler(state="*", commands={"morze", "quiz_1", "quiz_2", "quiz_3", "quiz_4", "quiz_5",
+                                                     "quiz_6", "quiz_7", "quiz_8"})
     async def start_quests(msg: types.Message):
 
         id = msg.from_user.id
