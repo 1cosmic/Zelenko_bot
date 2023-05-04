@@ -9,7 +9,15 @@ class States(Helper):
     REGISTER = ListItem()
 
     QUEST_MORZE = ListItem()
-    QUEST_QUIZ = ListItem()
+    QUEST_QUIZ_1 = ListItem()
+    QUEST_QUIZ_2 = ListItem()
+    QUEST_QUIZ_3 = ListItem()
+    QUEST_QUIZ_4 = ListItem()
+    QUEST_QUIZ_5 = ListItem()
+    QUEST_QUIZ_6 = ListItem()
+    QUEST_QUIZ_7 = ListItem()
+    QUEST_QUIZ_8 = ListItem()
+
 
     GO_TO_NEXT = ListItem()
 
