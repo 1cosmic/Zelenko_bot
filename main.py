@@ -261,7 +261,21 @@ if __name__ == "__main__":
         my_str = my_str.replace('—', '--')
 
         if my_str != coded:
-            await tg_bot.send_message(id, text='Нет, что-то здесь не так. Попробуй еще раз.')
+            t = ''
+            if len(my_str) < len(coded):
+                for i in range(len(coded)-len(my_str)):
+                    my_str+='*'
+
+            if len(my_str) > len(coded):
+                my_str = my_str[:len(coded)]
+
+            for i in range(len(coded)):
+                if my_str[i] != coded[i]:
+                    t+='*'
+                else:
+                    t+=coded[i]
+
+            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены места с ошибками.\n {t}")
             return
         else:
             state = dispatcher.current_state(user=msg.from_user.id)
