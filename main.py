@@ -169,6 +169,7 @@ if __name__ == "__main__":
 
         if msg.text == "/morze":
             await state.set_state(States.QUEST_MORZE[0])
+            await tg_bot.send_message(id, Messages['question_morze'])
 
         if msg.text == "/quiz_1":
             await state.set_state(States.QUEST_QUIZ_1[0])
@@ -243,13 +244,42 @@ if __name__ == "__main__":
     async def q_Morze(msg: types.Message):
 
         id = msg.from_user.id
+        code = {'а': '.-', 'б': '-...', 'в': '.--', 'г': '--.', 'д': '-..', 'е': '.', 'ё': '.',
+                'ж': '...-', 'з': '--..', 'и': '..', 'й': '.---', 'к': '-.-', 'л': '.-..',
+                'м': '--', 'н': '-.', 'о': '---', 'п': '.--.', 'р': '.-.', 'с': '...', 'т': '-',
+                'у': '..-', 'ф': '..-.', 'х': '....', 'ц': '-.-.', 'ч': '---.', 'ш': '----',
+                'щ': '--.-', 'ъ': '.--.-.', 'ь': '-..-', 'ы': '-.--', 'э': '..-..', 'ю': '..--',
+                'я': '.-.-',
+                }
+        name = list_user[id].name
+        coded = ''
+        for char in name.lower():
+            coded += code[char]
 
-        if msg.text == "Пройти квест":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Поздравляю! Ты прошёл квест Морзе!")
+        my_str = msg.text
+        my_str = my_str.replace('…', '...')
+        my_str = my_str.replace('—', '--')
 
+        if my_str != coded:
+            t = ''
+            if len(my_str) < len(coded):
+                for i in range(len(coded)-len(my_str)):
+                    my_str+='*'
+
+            if len(my_str) > len(coded):
+                my_str = my_str[:len(coded)]
+
+            for i in range(len(coded)):
+                if my_str[i] != coded[i]:
+                    t+='*'
+                else:
+                    t+=coded[i]
+
+            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены места с ошибками.\n {t}")
+            return
         else:
-            await msg.reply("Тут сейчас должен быть лор квеста.")
+            state = dispatcher.current_state(user=msg.from_user.id)
+            await tg_bot.send_message(id, text="Молодец! Все верно!\nКвест пройден!")
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_1[0])
