@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
                 else:
                     await_user.append(id)
-                    print("Погоди немного, сейчас освободится локация и я тебя проведук ней.")
+                    print("Погоди немного, сейчас освободится локация и я тебя проведу к ней.")
 
             # await tg_bot.send_message(id, "Сейчас я тебя отправлю на следующий квест. Приготовься!")
             # await_user.remove(id)
@@ -173,71 +173,35 @@ if __name__ == "__main__":
 
         if msg.text == "/quiz_1":
             await state.set_state(States.QUEST_QUIZ_1[0])
-            await tg_bot.send_message(id,
-                                      "Я очень люблю проводить эксперименты! Мир вокруг такой удивительный, "
-                                      "что открытия могут ждать в "
-                                      "самых неожиданных местах. В своем доме я могу проводить эксперименты на каждом "
-                                      "шагу. Попробуй и "
-                                      "ты! Найди мою лабораторию для исследования света и узнай: Сколько лампочек "
-                                      "нужно включить, "
-                                      "чтобы получился белый цвет?")
+            await tg_bot.send_message(id, Messages['quiz_1'])
 
         if msg.text == "/quiz_2":
             await state.set_state(States.QUEST_QUIZ_2[0])
-            await tg_bot.send_message(id,
-                                      "У меня есть пара домашних животных: это 2 улитки – Саша и Саша. Мне нравится "
-                                      "за ними наблюдать и есть, чему у них поучиться – они никогда не торопятся! "
-                                      "Например, за час они проползут совсем небольшое расстояние. Особенно, "
-                                      "если сравнивать с другими животными. А знаешь, на какое расстояние за один час "
-                                      "прокрутится наша планета? Где-то в доме у меня хранится правильный ответ!")
+            await tg_bot.send_message(id, Messages['quiz_2'])
 
         if msg.text == "/quiz_3":
             await state.set_state(States.QUEST_QUIZ_3[0])
-            await tg_bot.send_message(id,
-                                      "Каждый день я придумываю разные изобретения. То создам вертолет для улиток, "
-                                      "то трамплин для пирожков. А когда я устаю от работы - я смотрю слайды и "
-                                      "фотографии на своем диапроекторе.Особенно мне нравятся истории про зверей, "
-                                      "а моя самая любимая пленка - про одного представителя семейства кошачьих. "
-                                      "Попробуй найти эту пленку! Как называется это животное?")
+            await tg_bot.send_message(id, Messages['quiz_3'])
 
         if msg.text == "/quiz_4":
             await state.set_state(States.QUEST_QUIZ_4[0])
-            await tg_bot.send_message(id,
-                                      "А обратил ли ты внимание на железные ворота во дворе? Напомнили ли они тебе "
-                                      "что-нибудь? Они похожи на бабочку. Это связано с тем, что архитекторы, "
-                                      "художники, инженеры смотрели на природу и создавали свои работы и механизмы по "
-                                      "её образам. Одна из таких аналогий хранится у меня  на кухне. Скажи, "
-                                      "что напоминает тебе ракушка? ")
+            await tg_bot.send_message(id, Messages['quiz_4'])
 
         if msg.text == "/quiz_5":
             await state.set_state(States.QUEST_QUIZ_5[0])
-            await tg_bot.send_message(id,
-                                      "Мой друг из Китая подарил мне очень интересную головоломку, но у меня никак не "
-                                      "получается ее собрать! Поэтому я храню ее на видном месте, чтобы все гости "
-                                      "могли мне помочь. Сможешь найти ее название? Как она называется? ")
+            await tg_bot.send_message(id, Messages['quiz_5'])
 
         if msg.text == "/quiz_6":
             await state.set_state(States.QUEST_QUIZ_6[0])
-            await tg_bot.send_message(id,
-                                      "Я обожаю путешествовать! Из каждой своей поездки я привожу памятный сувенир. "
-                                      "Например, из последнего путешествия я привёз гору апельсинов. Сможешь ли ты "
-                                      "понять, с каким чемоданом я ездил? Выбери правильный номер: ")
+            await tg_bot.send_message(id, Messages['quiz_6'])
 
         if msg.text == "/quiz_7":
             await state.set_state(States.QUEST_QUIZ_7[0])
-            await tg_bot.send_message(id,
-                                      "Для вдохновения на новые изобретения я храню в своем кабинете коллекцию "
-                                      "утюгов. Как ты думаешь, а давно ли люди начали их использовать? Если сейчас "
-                                      "нам понадобится электричество, то раньше были нужны угли - тогда утюги были "
-                                      "очень тяжелыми! Скажи, под каким номером у меня хранится самый тяжелый утюг?")
+            await tg_bot.send_message(id, Messages['quiz_7'])
 
         if msg.text == "/quiz_8":
             await state.set_state(States.QUEST_QUIZ_8[0])
-            await tg_bot.send_message(id,
-                                      "Моя любимая музыка - это звуки природы. Поэтому я изобрел специальный звуковые "
-                                      "аппараты, на которых можно играть музыку окружающего мира. Попробуй их "
-                                      "протестировать! А потом внимательно посмотри на эти силуэты и выбери то "
-                                      "изобретение, с помощью которого можно создать звук ветра.")
+            await tg_bot.send_message(id, Messages['quiz_8'])
 
 
     @dispatcher.message_handler(state=States.QUEST_MORZE[0])
@@ -275,7 +239,8 @@ if __name__ == "__main__":
                 else:
                     t+=coded[i]
 
-            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены места с ошибками.\n {t}")
+            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены "
+                                               f"места с ошибками.\n {t}")
             return
         else:
             state = dispatcher.current_state(user=msg.from_user.id)
@@ -283,22 +248,20 @@ if __name__ == "__main__":
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_1[0])
-    async def q_Quiz(msg: types.Message, flag_for_hints=0):
+    async def q_Quiz(msg: types.Message):
         id = msg.from_user.id
         if msg.text == "3":
             state = dispatcher.current_state(user=msg.from_user.id)
             await msg.reply("Молодец! Все верно!")
             await msg.reply("Квест пройден!")
+
         else:
             flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимение на "
-                                "Музу, "
-                                "которая спряталась в углу шкафа")
+            if flag_for_hints == 0:
+                await msg.reply(Messages['quiz_1_hints_1'])
+                flag_for_hints = 1
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: провести эксперемент "
-                                "можно в "
-                                "шкафу.")
+                await msg.reply(Messages['quiz_1_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_2[0])
@@ -309,8 +272,7 @@ if __name__ == "__main__":
             await msg.reply("Молодец! Все верно!")
             await msg.reply("Квест пройден!")
         else:
-            await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чтобы узнать,"
-                            "кто и сколько проходит за час, необходимо подняться на чердак.")
+            await msg.reply(Messages["quiz_2_hints_1"])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_3[0])
@@ -323,11 +285,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимание на "
-                                "небольшие полки в углу стола.")
+                await msg.reply(Messages['quiz_3_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: ООбычно плёнка хранится в "
-                                "маленьких цилиндрических ёмкостях. Попробуйте её найти.")
+                await msg.reply(Messages['quiz_3_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_4[0])
@@ -340,12 +300,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы отыскать нужную "
-                                "ракушку, найдите стену с аналогиями на кухне.")
+                await msg.reply(Messages['quiz_4_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Если посмотреть на аналогии "
-                                "архитектора, то можно заметить стрижа, по его образу люди создали летательные "
-                                "аппараты. А что изображено на другой фотографии?")
+                await msg.reply(Messages['quiz_4_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_5[0])
@@ -358,12 +315,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы собрать древнюю "
-                                "китайскую игру, необходимо вынуть все деревянные элементы из формы, "
-                                "а затем расположить их таким образом, чтобы получилась фигура. ")
+                await msg.reply(Messages['quiz_5_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Три головоломки находятся "
-                                "около входа в чулан.")
+                await msg.reply("quiz_5_hints_2")
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_6[0])
@@ -376,11 +330,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чемоданы, с которыми "
-                                "архитектор ездит в путешествия, хранятся в чулане.")
+                await msg.reply(Messages['quiz_6_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Открывая каждый, попробуйте "
-                                "найти, в каком чемодане чувствуется запах апельсинов. ")
+                await msg.reply(Messages['quiz_6_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_7[0])
