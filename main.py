@@ -239,7 +239,8 @@ if __name__ == "__main__":
                 else:
                     t+=coded[i]
 
-            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены места с ошибками.\n {t}")
+            await tg_bot.send_message(id, text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены "
+                                               f"места с ошибками.\n {t}")
             return
         else:
             state = dispatcher.current_state(user=msg.from_user.id)
@@ -257,14 +258,10 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 0:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимение на "
-                                "Музу, "
-                                "которая спряталась в углу шкафа")
+                await msg.reply(Messages['quiz_1_hints_1'])
                 flag_for_hints = 1
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: провести эксперемент "
-                                "можно в "
-                                "шкафу.")
+                await msg.reply(Messages['quiz_1_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_2[0])
@@ -275,8 +272,7 @@ if __name__ == "__main__":
             await msg.reply("Молодец! Все верно!")
             await msg.reply("Квест пройден!")
         else:
-            await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чтобы узнать,"
-                            "кто и сколько проходит за час, необходимо подняться на чердак.")
+            await msg.reply(Messages["quiz_2_hints_1"])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_3[0])
@@ -289,11 +285,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимание на "
-                                "небольшие полки в углу стола.")
+                await msg.reply(Messages['quiz_3_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: ООбычно плёнка хранится в "
-                                "маленьких цилиндрических ёмкостях. Попробуйте её найти.")
+                await msg.reply(Messages['quiz_3_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_4[0])
@@ -306,12 +300,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы отыскать нужную "
-                                "ракушку, найдите стену с аналогиями на кухне.")
+                await msg.reply(Messages['quiz_4_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Если посмотреть на аналогии "
-                                "архитектора, то можно заметить стрижа, по его образу люди создали летательные "
-                                "аппараты. А что изображено на другой фотографии?")
+                await msg.reply(Messages['quiz_4_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_5[0])
@@ -324,12 +315,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы собрать древнюю "
-                                "китайскую игру, необходимо вынуть все деревянные элементы из формы, "
-                                "а затем расположить их таким образом, чтобы получилась фигура. ")
+                await msg.reply(Messages['quiz_5_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Три головоломки находятся "
-                                "около входа в чулан.")
+                await msg.reply("quiz_5_hints_2")
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_6[0])
@@ -342,11 +330,9 @@ if __name__ == "__main__":
         else:
             flag_for_hints = randint(1, 2)
             if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чемоданы, с которыми "
-                                "архитектор ездит в путешествия, хранятся в чулане.")
+                await msg.reply(Messages['quiz_6_hints_1'])
             else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Открывая каждый, попробуйте "
-                                "найти, в каком чемодане чувствуется запах апельсинов. ")
+                await msg.reply(Messages['quiz_6_hints_2'])
 
 
     @dispatcher.message_handler(state=States.QUEST_QUIZ_7[0])
