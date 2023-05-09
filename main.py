@@ -3,7 +3,7 @@ import config
 from project.users import User
 from project.utils import States, States_Quest, code_Morze
 from project.buttons import Buttons
-from project.messages import Messages, quests_welcomes, quests_answers, quests_dops, quests_hints
+from project.messages import quests_welcomes, quests_answers, quests_dops, quests_hints
 from project.skeleton_quest import create_quests, free_quests
 
 from aiogram import Bot, Dispatcher, executor, types
