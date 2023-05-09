@@ -1,11 +1,9 @@
-from random import randint
-
 import config
 
 from project.users import User
-from project.utils import States
+from project.utils import States, States_Quest, code_Morze
 from project.buttons import Buttons
-from project.messages import Messages
+from project.messages import Messages, quests_welcomes, quests_answers, quests_dops, quests_hints
 from project.skeleton_quest import create_quests, free_quests
 
 from aiogram import Bot, Dispatcher, executor, types
@@ -14,7 +12,6 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from asyncio import sleep
 
-flag_for_hints = 0
 
 # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
 # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
@@ -48,14 +45,16 @@ if __name__ == "__main__":
     # Список пользователей, находящихся в очереди на прохождение (в случае пробок).
     await_user = []
 
+
     async def register(id, username):
 
         pre_register_user.remove(id)
 
         state = dispatcher.current_state(user=id)
-        list_user[id] = User(id, username, None)
-
         await state.set_state(States.REGISTER[0])
+
+        list_user[id] = User(id, username, None, state)
+
         await tg_bot.send_message(id, Messages['reg_name'], reply_markup=types.ReplyKeyboardRemove())
 
 
@@ -66,35 +65,174 @@ if __name__ == "__main__":
     async def go_to_next_quest(user=None, quest=None):
 
         if user == None:
+
             for u in await_user:
-                if quest in u.required_quest:
-                    index_q = list_quest.index(quest)
-                    list_quest[index_q].occupy(u)
+                user = list_user[u]
+                id = quest.id
 
-                    # ДОПИСАТЬ правильную установку состояний в зависимости от квеста.
+                if id in user.required_quests():
 
-                    await dispatcher.current_state(user=u).set_state(States.QUEST_MORZE[0])
-                    await tg_bot.send_message(u, "Перенаправляю на следующий квест...")
+                    await tg_bot.send_message(user.chatId, "Перенаправляю на следующий квест...")
+
+                    # Удаляем пользователя из очереди ожидающих.
+                    await_user.remove(u)
+
+                    # Связываем пользователя и его квест.
+                    list_quest[id].occupy(user)
+                    user.set_cur_quest(quest)
+
+                    # Устанавливаем состояние пользователя на прохождение соответствующего квеста.
+                    # cur_state = dispatcher.current_state(user=u)
+                    # await cur_state.set_state(States_Quest.all()[id])
+                    await user.state.set_state(States_Quest.all()[id])
+
+                    # DEBUG:
+                    # await tg_bot.send_message(user.chatId, f"Твоё текущее состояние: {await user.state.get_state()}")
+                    await welcome_to_the_Quest(user, quest.id)
+
 
         if quest == None:
 
             print("Пытаюсь обработать пользователя.")
 
             for q in free_quests(list_quest):
-                print(q)
-                if q in user.required_quests():
-                    print("Прохожу основную логику работы.")
 
-                    index_q = list_quest.index(q)
-                    list_quest[index_q].occupy(user)
+                if q.id in user.required_quests():
+                    print("Сейчас пользователь будет перенаправлен.")
 
-                    # ДОПИСАТЬ правильную установку состояний в зависимости от квеста.
+                    # Связываем пользователя и его квест.
+                    quest_id = list_quest.index(q)
+                    list_quest[quest_id].occupy(user)
+                    user.set_cur_quest(q)
 
-                    await dispatcher.current_state(user=user.chatId).set_state(States.QUEST_MORZE[0])
-                    await tg_bot.send_message(user, "Перенаправляю на следующий квест...")
+                    # Устанавливаем состояние пользователя на прохождение соответствующего квеста.
+                    state = dispatcher.current_state(user=user.chatId)
+                    await state.set_state(States_Quest.all()[q.id])
+
+                    # Уведомляем пользователя об переходе на следующий квест.
+                    await tg_bot.send_message(user.chatId, f"Перенаправляю на следующий квест: {q.name}")
+                    await welcome_to_the_Quest(user, quest_id)
+
+                    # DEBUG:
+                    # await tg_bot.send_message(user.chatId, f"Твоё текущее состояние: {await state.get_state()}")
+
+                    return True
+
+        return False
 
 
-    # TODO: Написать функцию распрделения пользователей по комнатам.
+    async def check_of_free_quests(id):
+        """
+        Функция распределения пользователей по комнатам-квестам.
+
+        :param message:
+        :return:
+        """
+
+        # state = list_user[id].state
+        user = list_user[id]
+
+        if user.is_free():
+            if id not in await_user:
+
+                await tg_bot.send_message(id, "Сейчас проверим, свободны ли квесты?")
+                await sleep(1.5)
+
+                if len(free_quests(list_quest)) > 0:
+                    # await tg_bot.send_message(id, "По идее, сейчас я тебя перенаправлю на другой квест. Ожидай.",
+                                              # reply_markup=types.ReplyKeyboardRemove())
+
+                    await go_to_next_quest(user=user)
+
+                else:
+                    if id not in await_user:
+                        await_user.append(id)
+
+                    await tg_bot.send_message(id,
+                        "Погоди немного, сейчас освободится локация и я тебя проведу к ней. Держи телефон при себе!")
+
+            else:
+                await tg_bot.send_message(id, "Перед тобой в очереди 1 человек. Подожди немного, сейчас "
+                                    "он закончит и мы продолжим.")
+
+        else:
+            await tg_bot.send_message(id, "Ты успешно прошёл все комнаты! Красавчик, брат.")
+
+
+    async def quit_from_quest(user):
+
+        state = user.state
+
+        # Освобождаем квест.
+        quest = user.get_cur_quest()
+        list_quest[quest.id].free()
+
+        # Очищаем данный квест из непрошедних пользоватем и устанавливаем текущий - None.
+        user.pop_quest(quest.id)
+        user.set_cur_quest(None)
+        user.reset_counter()
+
+        # await msg.answer(f"Твоё текущее состояние: {await state.get_state()}")
+        await state.set_state(States.GO_TO_NEXT[0])
+
+        # Отправляем освободившийся квест дальше по очереди.
+        await go_to_next_quest(quest=quest)
+
+        # Перенаправляем юзера, освободившего квест.
+        await tg_bot.send_message(user.chatId,
+                                  "Сейчас я отправлю тебя на следующий квест.",
+                                  reply_markup=Buttons['k_run'])
+        await tg_bot.send_message(user.chatId, "Готов?", reply_markup=Buttons['b_run'])
+
+
+
+    async def welcome_to_the_Quest(user, id_quest):
+
+        await sleep(1)
+        await tg_bot.send_message(user.chatId, quests_welcomes[id_quest])
+
+
+    async def quest_processor(id, msg, id_quest):
+
+        user = list_user[id]
+
+        print(f"Попытка пользователя № {user.get_counter()}")
+
+        if msg.text == quests_answers[id_quest]:
+
+            await msg.answer(quests_dops["True"])
+            await sleep(1)
+
+            return True
+
+        else:
+
+            flag_for_hints = user.get_counter()
+            if flag_for_hints < 2:
+
+                user.up_counter()
+
+                await msg.answer(quests_dops["False"])
+                await sleep(1)
+
+                await msg.reply(quests_hints[id_quest][flag_for_hints])
+
+            else:
+                print("Дописать логику: при превышении числа подсказок.")
+                return False
+
+
+
+
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+    # =-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+
+
+
 
     @dispatcher.message_handler(state='*', commands=['start'])
     async def start(message: types.Message):
@@ -104,318 +242,21 @@ if __name__ == "__main__":
 
         # Добавляем пользователя в очередь на регистрацию.
         if (id not in pre_register_user) and (id not in list_user.keys()):
+
             pre_register_user.append(id)
 
-            # Чистим историю диалога, если человек вышел за границы наших возможностей и познал Дзен.
-            # await tg_bot.delete_message(message.chat.id, message.message_id)
+            # Приветствие.
+            await message.answer(Messages['start'], reply_markup=Buttons['k_start'])
+            # await sleep(1)
+            await tg_bot.send_message(id, "Тебя ждёт увлекательное приключение!", reply_markup=Buttons['b_start'])
 
-        # Приветствие.
-        await message.answer(Messages['start'], reply_markup=Buttons['key_start'])
-        await sleep(1)
-        await tg_bot.send_message(id, "Тебя ждёт увлекательное приключение!", reply_markup=Buttons['start'])
+            return True
 
+        if id in list_user.keys():
+            await message.answer("Ты уже зарегистрирован. Продолжай прохождение!")
 
-    @dispatcher.message_handler(state=States.GO_TO_NEXT[0])
-    async def run_next_quest(msg):
-        """
-        Функция распределения пользователей по комнатам-квестам.
-
-        :param message:
-        :return:
-        """
-        id = msg.from_user.id
-        state = dispatcher.current_state(user=id)
-
-        # Debug информация.
-        await msg.answer(f"Квесты на прохождение:\n{list_user[id].required_quests()}")
-
-        if list_user[id].is_free:
-            if id not in await_user:
-
-                await msg.answer("Сейчас проверим, свободны ли квесты?")
-
-                if len(free_quests(list_quest)) > 0:
-                    print("Пытаюсь перевести человека на квест...")
-                    await go_to_next_quest(list_user[id])
-
-                else:
-                    await_user.append(id)
-                    print("Погоди немного, сейчас освободится локация и я тебя проведук ней.")
-
-            # await tg_bot.send_message(id, "Сейчас я тебя отправлю на следующий квест. Приготовься!")
-            # await_user.remove(id)
-            #
-            # await msg.answer("Пока все квесты заняты, подожди немного.")
-            #
-            # else:
-
-
-        else:
-            msg.reply("Ты успешно прошёл все комнаты! Красавчик, брат.")
-
-        await msg.reply("По идее, сейчас я тебя перенаправлю на другой квест. Ожидай.",
-                        reply_markup=types.ReplyKeyboardRemove())
-
-        # TODO: Написать алгоритм выборки свободного квеста по приоритету.
-        pass
-
-
-    @dispatcher.message_handler(state="*", commands={"morze", "quiz_1", "quiz_2", "quiz_3", "quiz_4", "quiz_5",
-                                                     "quiz_6", "quiz_7", "quiz_8"})
-    async def start_quests(msg: types.Message):
-
-        id = msg.from_user.id
-        state = dispatcher.current_state(user=id)
-
-        if msg.text == "/morze":
-            await state.set_state(States.QUEST_MORZE[0])
-
-        if msg.text == "/quiz_1":
-            await state.set_state(States.QUEST_QUIZ_1[0])
-            await tg_bot.send_message(id,
-                                      "Я очень люблю проводить эксперименты! Мир вокруг такой удивительный, "
-                                      "что открытия могут ждать в "
-                                      "самых неожиданных местах. В своем доме я могу проводить эксперименты на каждом "
-                                      "шагу. Попробуй и "
-                                      "ты! Найди мою лабораторию для исследования света и узнай: Сколько лампочек "
-                                      "нужно включить, "
-                                      "чтобы получился белый цвет?")
-
-        if msg.text == "/quiz_2":
-            await state.set_state(States.QUEST_QUIZ_2[0])
-            await tg_bot.send_message(id,
-                                      "У меня есть пара домашних животных: это 2 улитки – Саша и Саша. Мне нравится "
-                                      "за ними наблюдать и есть, чему у них поучиться – они никогда не торопятся! "
-                                      "Например, за час они проползут совсем небольшое расстояние. Особенно, "
-                                      "если сравнивать с другими животными. А знаешь, на какое расстояние за один час "
-                                      "прокрутится наша планета? Где-то в доме у меня хранится правильный ответ!")
-
-        if msg.text == "/quiz_3":
-            await state.set_state(States.QUEST_QUIZ_3[0])
-            await tg_bot.send_message(id,
-                                      "Каждый день я придумываю разные изобретения. То создам вертолет для улиток, "
-                                      "то трамплин для пирожков. А когда я устаю от работы - я смотрю слайды и "
-                                      "фотографии на своем диапроекторе.Особенно мне нравятся истории про зверей, "
-                                      "а моя самая любимая пленка - про одного представителя семейства кошачьих. "
-                                      "Попробуй найти эту пленку! Как называется это животное?")
-
-        if msg.text == "/quiz_4":
-            await state.set_state(States.QUEST_QUIZ_4[0])
-            await tg_bot.send_message(id,
-                                      "А обратил ли ты внимание на железные ворота во дворе? Напомнили ли они тебе "
-                                      "что-нибудь? Они похожи на бабочку. Это связано с тем, что архитекторы, "
-                                      "художники, инженеры смотрели на природу и создавали свои работы и механизмы по "
-                                      "её образам. Одна из таких аналогий хранится у меня  на кухне. Скажи, "
-                                      "что напоминает тебе ракушка? ")
-
-        if msg.text == "/quiz_5":
-            await state.set_state(States.QUEST_QUIZ_5[0])
-            await tg_bot.send_message(id,
-                                      "Мой друг из Китая подарил мне очень интересную головоломку, но у меня никак не "
-                                      "получается ее собрать! Поэтому я храню ее на видном месте, чтобы все гости "
-                                      "могли мне помочь. Сможешь найти ее название? Как она называется? ")
-
-        if msg.text == "/quiz_6":
-            await state.set_state(States.QUEST_QUIZ_6[0])
-            await tg_bot.send_message(id,
-                                      "Я обожаю путешествовать! Из каждой своей поездки я привожу памятный сувенир. "
-                                      "Например, из последнего путешествия я привёз гору апельсинов. Сможешь ли ты "
-                                      "понять, с каким чемоданом я ездил? Выбери правильный номер: ")
-
-        if msg.text == "/quiz_7":
-            await state.set_state(States.QUEST_QUIZ_7[0])
-            await tg_bot.send_message(id,
-                                      "Для вдохновения на новые изобретения я храню в своем кабинете коллекцию "
-                                      "утюгов. Как ты думаешь, а давно ли люди начали их использовать? Если сейчас "
-                                      "нам понадобится электричество, то раньше были нужны угли - тогда утюги были "
-                                      "очень тяжелыми! Скажи, под каким номером у меня хранится самый тяжелый утюг?")
-
-        if msg.text == "/quiz_8":
-            await state.set_state(States.QUEST_QUIZ_8[0])
-            await tg_bot.send_message(id,
-                                      "Моя любимая музыка - это звуки природы. Поэтому я изобрел специальный звуковые "
-                                      "аппараты, на которых можно играть музыку окружающего мира. Попробуй их "
-                                      "протестировать! А потом внимательно посмотри на эти силуэты и выбери то "
-                                      "изобретение, с помощью которого можно создать звук ветра.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_MORZE[0])
-    async def q_Morze(msg: types.Message):
-
-        id = msg.from_user.id
-
-        if msg.text == "Пройти квест":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Поздравляю! Ты прошёл квест Морзе!")
-
-        else:
-            await msg.reply("Тут сейчас должен быть лор квеста.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_1[0])
-    async def q_Quiz(msg: types.Message, flag_for_hints=0):
-        id = msg.from_user.id
-        if msg.text == "3":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимение на "
-                                "Музу, "
-                                "которая спряталась в углу шкафа")
-            else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: провести эксперемент "
-                                "можно в "
-                                "шкафу.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_2[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "1675":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка 1: Чтобы узнать,"
-                            "кто и сколько проходит за час, необходимо подняться на чердак.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_3[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "тигр":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Обратите внимание на "
-                                "небольшие полки в углу стола.")
-            else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: ООбычно плёнка хранится в "
-                                "маленьких цилиндрических ёмкостях. Попробуйте её найти.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_4[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "лестница":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Это правильный ответ!")
-            await msg.reply("Квест пройден!")
-        else:
-            flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы отыскать нужную "
-                                "ракушку, найдите стену с аналогиями на кухне.")
-            else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Если посмотреть на аналогии "
-                                "архитектора, то можно заметить стрижа, по его образу люди создали летательные "
-                                "аппараты. А что изображено на другой фотографии?")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_5[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "танграм":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чтобы собрать древнюю "
-                                "китайскую игру, необходимо вынуть все деревянные элементы из формы, "
-                                "а затем расположить их таким образом, чтобы получилась фигура. ")
-            else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Три головоломки находятся "
-                                "около входа в чулан.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_6[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "2":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Это правильный ответ!")
-            await msg.reply("Квест пройден!")
-        else:
-            flag_for_hints = randint(1, 2)
-            if flag_for_hints == 1:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Чемоданы, с которыми "
-                                "архитектор ездит в путешествия, хранятся в чулане.")
-            else:
-                await msg.reply("Нет, что-то здесь не так. Попробуй еще раз. Подсказка: Открывая каждый, попробуйте "
-                                "найти, в каком чемодане чувствуется запах апельсинов. ")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_7[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "1":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            await msg.reply("Нет, что-то здесь не так. Попробуй еще раз.")
-
-
-    @dispatcher.message_handler(state=States.QUEST_QUIZ_8[0])
-    async def q_Quiz(msg: types.Message):
-        id = msg.from_user.id
-        if msg.text == "4":
-            state = dispatcher.current_state(user=msg.from_user.id)
-            await msg.reply("Молодец! Все верно!")
-            await msg.reply("Квест пройден!")
-        else:
-            await msg.reply("Нет, что-то здесь не так. Попробуй еще раз.")
-
-
-    @dispatcher.message_handler(commands=['quit'])
-    async def quit_from_game(message):
-        """
-        Выход из игры.
-
-        :param message:
-        :return:
-        """
-        pass
-
-
-    @dispatcher.message_handler(state=States.REGISTER[0])
-    async def register_user(msg: types.Message):
-        """
-        Регистрация пользователей.
-
-        :param msg:
-        :return:
-        """
-
-        id = msg.from_user.id
-        state = dispatcher.current_state(user=id)
-
-        if msg.text == "Да" and list_user[id].name != None:
-            await msg.reply("Отлично! Мы готовы начинать.")
-            await state.reset_state()
-
-            # Включить после написания готовой логики распределения по квестам.
-            # await state.set_state(States.GO_TO_NEXT[0])
-
-        elif msg.text == "Нет":
-            await msg.answer(Messages['reg_name'])
-            list_user[id].name = None
-
-        else:
-            list_user[id].name = msg.text
-
-            await tg_bot.send_message(id, "Убедись, что твоё имя написано правильно.")
-            await sleep(1.5)
-
-            await msg.reply(f"Тебя зовут {list_user[id].name}, верно?", reply_markup=Buttons['regs'])
+        # Чистим историю диалога, если человек вышел за границы наших возможностей и познал Дзен.
+        # await tg_bot.delete_message(message.chat.id, message.message_id)
 
 
     @dispatcher.callback_query_handler(lambda c: c.data == "!reg")
@@ -434,6 +275,140 @@ if __name__ == "__main__":
             await register(id, username)
 
 
+    @dispatcher.callback_query_handler(lambda c: c.data == "!run", state=States.GO_TO_NEXT)
+    async def processed_message(msg: types.Message):
+
+        await msg.answer("Кнопка обработана.")
+        user = msg.from_user.id
+        await check_of_free_quests(user)
+
+
+    @dispatcher.message_handler(state=States_Quest.all(), commands=['quit'])
+    async def quit_from_game(msg: types.Message):
+        """
+        Выход из игры.
+
+        :param message:
+        :return:
+        """
+
+        await msg.answer("Выходим из квеста.")
+
+        id = msg.from_user.id
+        user = list_user[id]
+
+        await quit_from_quest(user)
+
+        return True
+
+    ##### =================================
+    ####
+    ##
+    # Обработка сигналов после регистрации -> старт прохождения квестов.
+
+    @dispatcher.message_handler(state=States.GO_TO_NEXT)
+    async def processed_message(msg: types.Message):
+
+        user = msg.from_user.id
+        # state = dispatcher.current_state(user = user)
+        # await msg.answer(f"Твоё текущее состояние в хэндлере GO_TO_NEXT: {await state.get_state()}")
+
+        await check_of_free_quests(user)
+
+
+    ##
+    ####
+    ##### =================================
+
+
+    @dispatcher.message_handler(state=States_Quest.QUEST_1)
+    async def quest_1(msg: types.Message):
+
+        # await msg.answer("Квест 1")
+
+        id = msg.from_user.id
+        user = list_user[id]
+        name = user.name
+        coded = ''
+
+
+        for char in name.lower():
+            coded += code_Morze[char]
+
+        my_str = msg.text
+        my_str = my_str.replace('…', '...')
+        my_str = my_str.replace('—', '--')
+
+        if my_str != coded:
+            t = ''
+            if len(my_str) < len(coded):
+                for i in range(len(coded)-len(my_str)):
+                    my_str+='*'
+
+            if len(my_str) > len(coded):
+                my_str = my_str[:len(coded)]
+
+            for i in range(len(coded)):
+                if my_str[i] != coded[i]:
+                    t+='*'
+                else:
+                    t+=coded[i]
+
+            await msg.answer(text=f"Нет, что-то здесь не так. Попробуй еще раз. Звездочками обозначены "
+                                               f"места с ошибками.\n {t}")
+            return
+        else:
+            await msg.answer(text="Молодец! Все верно!\nКвест пройден!")
+            await quit_from_quest(user=user)
+
+
+    @dispatcher.message_handler(state=States_Quest.all()[1::])
+    async def q_Quiz(msg: types.Message):
+
+        id = msg.from_user.id
+        user = list_user[id]
+        quest = user.get_cur_quest()
+
+        if await quest_processor(id, msg, quest.id):
+            await msg.reply(quests_dops["True"])
+            await quit_from_quest(user)
+
+
+    @dispatcher.message_handler(state=States.REGISTER)
+    async def register_user(msg: types.Message):
+        """
+        Регистрация пользователей.
+
+        :param msg:
+        :return:
+        """
+
+        id = msg.from_user.id
+        state = list_user[id].state
+
+        if msg.text == "Да" and list_user[id].name != None:
+
+            await msg.answer("Отлично! Мы готовы начинать.", reply_markup=Buttons["k_run"]),
+            await msg.answer("Как только ты будешь готов, нажми кнопку и мы начнём твоё удивительное приключение!",
+                             reply_markup=Buttons["b_run"])
+
+            # Включить после написания готовой логики распределения по квестам.
+            await state.set_state(States.GO_TO_NEXT[0])  # распределение по алгоритму.
+            # await state.set_state(States.AWAIT_QUEST[0])  # распределение по кнопке.
+
+        elif msg.text == "Нет":
+            await msg.answer(Messages['reg_name'])
+            list_user[id].name = None
+
+        else:
+            list_user[id].name = msg.text
+
+            await tg_bot.send_message(id, "Убедись, что твоё имя написано правильно.")
+            await sleep(1.5)
+
+            await msg.reply(f"Тебя зовут {list_user[id].name}, верно?", reply_markup=Buttons['b_regs'])
+
+
     @dispatcher.message_handler()
     async def process_user_answer(msg: types.Message):
         """
@@ -444,7 +419,7 @@ if __name__ == "__main__":
         """
 
         id = msg.from_user.id
-        state = dispatcher.current_state(user=msg.from_user.id)
+        # state = dispatcher.current_state(user=msg.from_user.id)
 
         if msg.from_user.id in pre_register_user:
             return await register(id, msg.from_user.username)

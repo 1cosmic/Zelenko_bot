@@ -1,14 +1,39 @@
 
-count_quest = 2
+count_quest = 9
+count_hints = 2
 
 
 class User:
-    def __init__(self, chatId, username, name):
+    def __init__(self, chatId, username, name, state):
         self.chatId = chatId  # id-чата
-        self.username = username  # никнейм в телеграме
-        self.name = name  # имя человека при регистрации
+        self.username = username  # никнейм в телеграме.
+        self.name = name  # имя человека при регистрации.
+        self.state = state  # состояние dispatcher`а.
 
-        self.__required_quests = list(range(1, count_quest))  # список квестов для прохождения
+        self.__required_quests = list(range(count_quest))  # список квестов для прохождения
+        self.__current_quest = None
+        self.__counter_of_attemps = 0
+
+
+    def get_counter(self):
+        return self.__counter_of_attemps
+
+
+    def reset_counter(self):
+        self.__counter_of_attemps = 0
+
+
+    def up_counter(self):
+        self.__counter_of_attemps += 1
+
+
+    def set_cur_quest(self, quest):
+        self.__current_quest = quest
+
+
+    def get_cur_quest(self):
+        return self.__current_quest
+
 
     def is_free(self):
         """
